@@ -32,10 +32,10 @@ int main()
 {
   uWS::Hub h;
 
-  PID pid;
-  pid.Init(0.01, 0.004, 1.0);
+  PID pid_steer;
+  pid_steer.Init(0.01, 0.004, 1.0);
 
-  h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&pid_steer](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -51,9 +51,9 @@ int main()
           double speed = std::stod(j[1]["speed"].get<std::string>());
           double angle = std::stod(j[1]["steering_angle"].get<std::string>());
 
-          pid.UpdateError(cte);
+          pid_steer.UpdateError(cte);
 
-          double steer_value = pid.GetCorrection();
+          double steer_value = pid_steer.GetCorrection();
           /*
           * Calcuate steering value here, remember the steering value is
           * [-1, 1].
