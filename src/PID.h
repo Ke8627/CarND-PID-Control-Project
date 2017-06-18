@@ -26,7 +26,7 @@ public:
   */
   void UpdateError(double cte);
 
-  double GetSteerValue() const;
+  double GetCorrection() const;
 
   /*
   * Calculate the total PID error.

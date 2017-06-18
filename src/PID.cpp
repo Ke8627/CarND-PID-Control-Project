@@ -47,7 +47,7 @@ void PID::UpdateError(double cte)
   has_prev_error = true;
 }
 
-double PID::GetSteerValue() const
+double PID::GetCorrection() const
 {
   return -Kp * p_error - Ki * i_error - Kd * d_error;
 }

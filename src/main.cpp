@@ -53,7 +53,7 @@ int main()
 
           pid.UpdateError(cte);
 
-          double steer_value = pid.GetSteerValue();
+          double steer_value = pid.GetCorrection();
           /*
           * Calcuate steering value here, remember the steering value is
           * [-1, 1].
