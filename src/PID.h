@@ -1,22 +1,11 @@
 #ifndef PID_H
 #define PID_H
 
-class PID {
+#include <chrono>
+
+class PID
+{
 public:
-  /*
-  * Errors
-  */
-  double p_error;
-  double i_error;
-  double d_error;
-
-  /*
-  * Coefficients
-  */ 
-  double Kp;
-  double Ki;
-  double Kd;
-
   /*
   * Constructor
   */
@@ -37,10 +26,32 @@ public:
   */
   void UpdateError(double cte);
 
+  double GetSteerValue() const;
+
   /*
   * Calculate the total PID error.
   */
   double TotalError();
+
+private:
+  typedef std::chrono::time_point<std::chrono::system_clock> timestamp;
+  timestamp prev_time;
+
+  bool has_prev_error;
+
+  /*
+  * Errors
+  */
+  double p_error;
+  double i_error;
+  double d_error;
+
+  /*
+  * Coefficients
+  */
+  double Kp;
+  double Ki;
+  double Kd;
 };
 
 #endif /* PID_H */
