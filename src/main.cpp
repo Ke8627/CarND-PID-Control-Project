@@ -28,14 +28,59 @@ std::string hasData(std::string s) {
   return "";
 }
 
+double GetIdealSpeed(double steer_cte, double speed)
+{
+  auto abs_steer_cte = std::abs(steer_cte);
+
+  if (abs_steer_cte < 0.5)
+  {
+    return 30;
+  }
+  else if (abs_steer_cte > 3)
+  {
+    return 5;
+  }
+  else
+  {
+    return 20;
+  }
+}
+
+double CalcSpeedCte(double steer_cte, double speed)
+{
+  double ideal_speed = GetIdealSpeed(steer_cte, speed);
+
+  return speed - ideal_speed;
+}
+
+double Constrain(double value, double min, double max)
+{
+  if (min > max)
+  {
+    throw std::runtime_error("Invalid arguments.");
+  }
+  if (value < min)
+  {
+    return min;
+  }
+  else if (value > max)
+  {
+    return max;
+  }
+  return value;
+}
+
 int main()
 {
   uWS::Hub h;
 
   PID pid_steer;
-  pid_steer.Init(0.01, 0.004, 1.0);
+  pid_steer.Init(0.005, 0.004, 1.0);
 
-  h.onMessage([&pid_steer](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  PID pid_speed;
+  pid_speed.Init(0.003, 0.00001, 0.01);
+
+  h.onMessage([&pid_steer, &pid_speed](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -47,28 +92,33 @@ int main()
         std::string event = j[0].get<std::string>();
         if (event == "telemetry") {
           // j[1] is the data JSON object
-          double cte = std::stod(j[1]["cte"].get<std::string>());
+          double steer_cte = std::stod(j[1]["cte"].get<std::string>());
           double speed = std::stod(j[1]["speed"].get<std::string>());
-          double angle = std::stod(j[1]["steering_angle"].get<std::string>());
+          // double angle = std::stod(j[1]["steering_angle"].get<std::string>());
 
-          pid_steer.UpdateError(cte);
+          pid_steer.UpdateError(steer_cte);
 
-          double steer_value = pid_steer.GetCorrection();
+          pid_speed.UpdateError(CalcSpeedCte(steer_cte, speed));
+
+          double steer_value = Constrain(pid_steer.GetCorrection(), -1, 1);
+
+          double throttle = Constrain(pid_speed.GetCorrection(), 0, 1);
+
           /*
           * Calcuate steering value here, remember the steering value is
           * [-1, 1].
           * NOTE: Feel free to play around with the throttle and speed. Maybe use
           * another PID controller to control the speed!
           */
-          
+
           // DEBUG
-          std::cout << "CTE: " << cte << " Steering Value: " << steer_value << " Speed: " << speed << " Angle: " << angle << std::endl;
+          // std::cout << "CTE: " << steer_cte << " Steering Value: " << steer_value << " Speed: " << speed << " Angle: " << angle << " Throttle: " << throttle << std::endl;
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
-          msgJson["throttle"] = 0.3;
+          msgJson["throttle"] = throttle;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
+          // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {
