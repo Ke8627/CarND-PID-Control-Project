@@ -1,5 +1,6 @@
 #include <uWS/uWS.h>
 #include <iostream>
+#include <fstream>
 #include "json.hpp"
 #include "PID.h"
 #include <math.h>
@@ -29,21 +30,28 @@ std::string hasData(std::string s) {
   return "";
 }
 
+namespace
+{
+  static const double c_topSpeed = 30;
+  static const double c_medSpeed = 20;
+  static const double c_carefulSpeed = 5;
+}
+
 double GetIdealSpeed(double steer_cte, double speed)
 {
   auto abs_steer_cte = std::abs(steer_cte);
 
   if (abs_steer_cte < 0.5)
   {
-    return 40;
+    return c_topSpeed;
   }
   else if (abs_steer_cte > 3)
   {
-    return 5;
+    return c_carefulSpeed;
   }
   else
   {
-    return 20;
+    return c_medSpeed;
   }
 }
 
@@ -100,19 +108,29 @@ void SteerCar(PID& pid_steer, Twiddle* twiddle)
   uWS::Hub h;
 
   PID pid_speed;
-  pid_speed.Init(0.003, 0.00001, 0.01);
+  pid_speed.Init(0.03, 0.00001, 0.01);
 
   bool reached_speed = false;
+  int ignore_msg_count = 0;
 
   h.onMessage([&pid_steer,
                &pid_speed,
                &reached_speed,
-               &twiddle]
+               &twiddle,
+               &ignore_msg_count]
       (uWS::WebSocket<uWS::SERVER> ws,
        char *data,
        size_t length,
        uWS::OpCode opCode)
   {
+    if (ignore_msg_count > 0)
+    {
+      ignore_msg_count -= 1;
+      std::string msg = "42[\"reset\",{}]";
+      ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+      return;
+    }
+
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -147,7 +165,9 @@ void SteerCar(PID& pid_steer, Twiddle* twiddle)
                 || (reached_speed && CarStalled(speed)))
             {
               reached_speed = false;
+              ignore_msg_count = 10;
               twiddle->NextRun();
+              pid_speed.Init(0.03, 0.00001, 0.01);
 
               std::string msg = "42[\"reset\",{}]";
               ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
@@ -218,13 +238,17 @@ void SteerCar(PID& pid_steer, Twiddle* twiddle)
 
 int main()
 {
+  std::ofstream fout("params.txt", std::ofstream::app);
+
+  fout << "c_topSpeed=[" << c_topSpeed << "] c_medSpeed=[" << c_medSpeed << "] c_carefulSpeed=[" << c_carefulSpeed << "]" << std::endl;
+
   std::vector<double> dp = { 0.0025, 0.002, 0.5 };
   std::vector<double> p = { 0.005, 0.004, 1.0 };
 
   PID pid_steer;
   pid_steer.Init(p[0], p[1], p[2]);
 
-  Twiddle twiddle(pid_steer, p, dp);
+  Twiddle twiddle(pid_steer, p, dp, fout);
 
   SteerCar(pid_steer, &twiddle);
 }

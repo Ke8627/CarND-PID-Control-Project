@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-Twiddle::Twiddle(PID& pid, const std::vector<double>& p, const std::vector<double>& dp)
+Twiddle::Twiddle(PID& pid, const std::vector<double>& p, const std::vector<double>& dp, std::ostream& os)
   : m_pid(pid),
     m_p(p),
     m_dp(dp),
@@ -11,7 +11,8 @@ Twiddle::Twiddle(PID& pid, const std::vector<double>& p, const std::vector<doubl
     m_iteration(0),
     m_p_index(0),
     m_tried_negative(false),
-    m_start(std::chrono::system_clock::now())
+    m_start(std::chrono::system_clock::now()),
+    m_os(os)
 {
 }
 
@@ -31,9 +32,9 @@ void Twiddle::AdvanceParameter()
   m_pid.Init(m_p[0], m_p[1], m_p[2]);
 }
 
-void Twiddle::PrintStatus(std::ostream& os, double err)
+void Twiddle::PrintStatus(std::ostream& os, double err, double seconds)
 {
-    os << "err=[" << err << "] kP=[" << m_p[0] << "] kI=[" << m_p[1] << "] kD=[" << m_p[2] << "] iteration=[" << m_iteration << "]" << std::endl;
+    os << "err=[" << err << "] seconds=[" << seconds << "] kP=[" << m_p[0] << "] kI=[" << m_p[1] << "] kD=[" << m_p[2] << "] iteration=[" << m_iteration << "]" << std::endl;
 }
 
 void Twiddle::NextRun()
@@ -44,14 +45,13 @@ void Twiddle::NextRun()
 
   const double err = m_pid.TotalError() / run_time.count();
 
-  PrintStatus(std::cout, err);
+  PrintStatus(std::cout, err, run_time.count());
 
   m_start = std::chrono::system_clock::now();
 
   if (err < m_best_err)
   {
-    std::ofstream fout("params.txt", std::ofstream::app);
-    PrintStatus(fout, err);
+    PrintStatus(m_os, err, run_time.count());
 
     m_best_err = err;
     m_dp[m_p_index] *= 1.1;
