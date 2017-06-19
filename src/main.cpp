@@ -70,12 +70,12 @@ double Constrain(double value, double min, double max)
   return value;
 }
 
-int main()
+void SteerCar(double kP, double kI, double kD)
 {
   uWS::Hub h;
 
   PID pid_steer;
-  pid_steer.Init(0.005, 0.004, 1.0);
+  pid_steer.Init(kP, kI, kD);
 
   PID pid_speed;
   pid_speed.Init(0.003, 0.00001, 0.01);
@@ -161,7 +161,12 @@ int main()
   else
   {
     std::cerr << "Failed to listen to port" << std::endl;
-    return -1;
+    return;
   }
   h.run();
+}
+
+int main()
+{
+  SteerCar(0.005, 0.004, 1.0);
 }
