@@ -1,4 +1,5 @@
 #include "PID.h"
+#include <cmath>
 
 using namespace std;
 
@@ -13,7 +14,8 @@ PID::PID()
     d_error(0),
     Kp(0),
     Ki(0),
-    Kd(0)
+    Kd(0),
+    abs_error(0)
 {
 }
 
@@ -26,6 +28,18 @@ void PID::Init(double newKp, double newKi, double newKd)
   Kp = newKp;
   Ki = newKi;
   Kd = newKd;
+
+  Reset();
+}
+
+void PID::Reset()
+{
+  p_error = 0;
+  i_error = 0;
+  d_error = 0;
+  abs_error = 0;
+
+  has_prev_error = false;
 }
 
 void PID::UpdateError(double cte)
@@ -41,6 +55,7 @@ void PID::UpdateError(double cte)
 
   p_error = cte;
   i_error += cte;
+  abs_error += std::abs(cte);
 
   prev_time = current_time;
 
@@ -54,6 +69,6 @@ double PID::GetCorrection() const
 
 double PID::TotalError()
 {
-  return 0;
+  return abs_error;
 }
 

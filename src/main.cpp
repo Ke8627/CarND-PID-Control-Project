@@ -3,6 +3,7 @@
 #include "json.hpp"
 #include "PID.h"
 #include <math.h>
+#include "twiddle.h"
 
 // for convenience
 using json = nlohmann::json;
@@ -34,7 +35,7 @@ double GetIdealSpeed(double steer_cte, double speed)
 
   if (abs_steer_cte < 0.5)
   {
-    return 30;
+    return 40;
   }
   else if (abs_steer_cte > 3)
   {
@@ -70,17 +71,48 @@ double Constrain(double value, double min, double max)
   return value;
 }
 
-void SteerCar(double kP, double kI, double kD)
+bool SteeringErrorTooLarge(double steer_cte)
+{
+  static const double c_threshold = 2.2;
+
+  if (std::abs(steer_cte) > c_threshold)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+bool CarStalled(double speed)
+{
+  return speed < 2;
+}
+
+bool ReachedSpeed(double speed)
+{
+  return speed > 10;
+}
+
+void SteerCar(PID& pid_steer, Twiddle* twiddle)
 {
   uWS::Hub h;
-
-  PID pid_steer;
-  pid_steer.Init(kP, kI, kD);
 
   PID pid_speed;
   pid_speed.Init(0.003, 0.00001, 0.01);
 
-  h.onMessage([&pid_steer, &pid_speed](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  bool reached_speed = false;
+
+  h.onMessage([&pid_steer,
+               &pid_speed,
+               &reached_speed,
+               &twiddle]
+      (uWS::WebSocket<uWS::SERVER> ws,
+       char *data,
+       size_t length,
+       uWS::OpCode opCode)
+  {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -103,6 +135,24 @@ void SteerCar(double kP, double kI, double kD)
           double steer_value = Constrain(pid_steer.GetCorrection(), -1, 1);
 
           double throttle = Constrain(pid_speed.GetCorrection(), 0, 1);
+
+          if (twiddle)
+          {
+            if (!reached_speed && ReachedSpeed(speed))
+            {
+              reached_speed = true;
+            }
+
+            if (SteeringErrorTooLarge(steer_cte)
+                || (reached_speed && CarStalled(speed)))
+            {
+              reached_speed = false;
+              twiddle->NextRun();
+
+              std::string msg = "42[\"reset\",{}]";
+              ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+            }
+          }
 
           /*
           * Calcuate steering value here, remember the steering value is
@@ -145,7 +195,7 @@ void SteerCar(double kP, double kI, double kD)
   });
 
   h.onConnection([&h](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
-    std::cout << "Connected!!!" << std::endl;
+    // std::cout << "Connected!!!" << std::endl;
   });
 
   h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code, char *message, size_t length) {
@@ -168,5 +218,13 @@ void SteerCar(double kP, double kI, double kD)
 
 int main()
 {
-  SteerCar(0.005, 0.004, 1.0);
+  std::vector<double> dp = { 0.0025, 0.002, 0.5 };
+  std::vector<double> p = { 0.005, 0.004, 1.0 };
+
+  PID pid_steer;
+  pid_steer.Init(p[0], p[1], p[2]);
+
+  Twiddle twiddle(pid_steer, p, dp);
+
+  SteerCar(pid_steer, &twiddle);
 }

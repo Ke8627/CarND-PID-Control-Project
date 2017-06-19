@@ -21,6 +21,8 @@ public:
   */
   void Init(double Kp, double Ki, double Kd);
 
+  void Reset();
+
   /*
   * Update the PID error variables given cross track error.
   */
@@ -52,6 +54,8 @@ private:
   double Kp;
   double Ki;
   double Kd;
+
+  double abs_error;
 };
 
 #endif /* PID_H */
