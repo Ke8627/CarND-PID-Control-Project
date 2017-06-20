@@ -1,7 +1,8 @@
 #ifndef TWIDDLE_H
-#define TWIDDLe_H
+#define TWIDDLE_H
 
 #include "PID.h"
+#include "stopwatch.h"
 #include <iostream>
 #include <vector>
 
@@ -13,8 +14,6 @@ public:
   void NextRun();
 
 private:
-  typedef std::chrono::time_point<std::chrono::system_clock> timestamp;
-
   void AdvanceParameter();
 
   void PrintStatus(std::ostream&os, double err, double seconds);
@@ -28,7 +27,7 @@ private:
   int m_p_index;
   bool m_tried_negative;
 
-  timestamp m_start;
+  Stopwatch m_stopwatch;
 
   std::ostream& m_os;
 };

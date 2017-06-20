@@ -107,6 +107,9 @@ void SteerCar(PID& pid_steer, Twiddle* twiddle)
 {
   uWS::Hub h;
 
+  Stopwatch stopwatch;
+  stopwatch.Start();
+
   PID pid_speed;
   pid_speed.Init(0.03, 0.00001, 0.01);
 
@@ -117,7 +120,8 @@ void SteerCar(PID& pid_steer, Twiddle* twiddle)
                &pid_speed,
                &reached_speed,
                &twiddle,
-               &ignore_msg_count]
+               &ignore_msg_count,
+               &stopwatch]
       (uWS::WebSocket<uWS::SERVER> ws,
        char *data,
        size_t length,
@@ -162,8 +166,12 @@ void SteerCar(PID& pid_steer, Twiddle* twiddle)
             }
 
             if (SteeringErrorTooLarge(steer_cte)
-                || (reached_speed && CarStalled(speed)))
+                || (reached_speed && CarStalled(speed))
+                || (stopwatch.GetElapsedSeconds() > 250))
             {
+              stopwatch.Reset();
+              stopwatch.Start();
+
               reached_speed = false;
               ignore_msg_count = 10;
               twiddle->NextRun();
@@ -242,8 +250,8 @@ int main()
 
   fout << "c_topSpeed=[" << c_topSpeed << "] c_medSpeed=[" << c_medSpeed << "] c_carefulSpeed=[" << c_carefulSpeed << "]" << std::endl;
 
-  std::vector<double> dp = { 0.0025, 0.002, 0.25 };
-  std::vector<double> p = { 0.00775, 0.006222, 1.05 };
+  std::vector<double> dp = { 0.5, 0.5, 1.0 };
+  std::vector<double> p = { 0.5, 0.5, 1.0 };
 
   PID pid_steer;
   pid_steer.Init(p[0], p[1], p[2]);

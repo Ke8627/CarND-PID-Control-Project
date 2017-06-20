@@ -11,9 +11,9 @@ Twiddle::Twiddle(PID& pid, const std::vector<double>& p, const std::vector<doubl
     m_iteration(0),
     m_p_index(0),
     m_tried_negative(false),
-    m_start(std::chrono::system_clock::now()),
     m_os(os)
 {
+  m_stopwatch.Start();
 }
 
 void Twiddle::AdvanceParameter()
@@ -39,16 +39,17 @@ void Twiddle::PrintStatus(std::ostream& os, double err, double seconds)
 
 void Twiddle::NextRun()
 {
-  timestamp current_time = std::chrono::system_clock::now();
+  m_stopwatch.Stop();
 
-  std::chrono::duration<double> run_time = current_time - m_start;
+  double run_time = m_stopwatch.GetElapsedSeconds();
 
-  const double err = 1.0 / run_time.count();
+  const double err = (m_pid.TotalError() / run_time) + (2000.0 / run_time);
 
-  PrintStatus(std::cout, err, run_time.count());
-  PrintStatus(m_os, err, run_time.count());
+  PrintStatus(std::cout, err, run_time);
+  PrintStatus(m_os, err, run_time);
 
-  m_start = std::chrono::system_clock::now();
+  m_stopwatch.Reset();
+  m_stopwatch.Start();
 
   if (err < m_best_err)
   {
