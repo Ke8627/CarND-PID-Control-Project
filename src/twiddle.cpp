@@ -43,16 +43,15 @@ void Twiddle::NextRun()
 
   std::chrono::duration<double> run_time = current_time - m_start;
 
-  const double err = m_pid.TotalError() / run_time.count();
+  const double err = 1.0 / run_time.count();
 
   PrintStatus(std::cout, err, run_time.count());
+  PrintStatus(m_os, err, run_time.count());
 
   m_start = std::chrono::system_clock::now();
 
   if (err < m_best_err)
   {
-    PrintStatus(m_os, err, run_time.count());
-
     m_best_err = err;
     m_dp[m_p_index] *= 1.1;
 
