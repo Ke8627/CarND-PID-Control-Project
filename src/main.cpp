@@ -244,19 +244,34 @@ void SteerCar(PID& pid_steer, Twiddle* twiddle)
   h.run();
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-  std::ofstream fout("params.txt", std::ofstream::app);
-
-  fout << "c_topSpeed=[" << c_topSpeed << "] c_medSpeed=[" << c_medSpeed << "] c_carefulSpeed=[" << c_carefulSpeed << "]" << std::endl;
-
-  std::vector<double> dp = { 0.5, 0.5, 1.0 };
-  std::vector<double> p = { 1.0, 0.0, 1.0 };
+  // Lowest err of 10.0821.
+  std::vector<double> p = { 1.52047, 0.0, 1.0 };
 
   PID pid_steer;
   pid_steer.Init(p[0], p[1], p[2]);
 
-  Twiddle twiddle(pid_steer, p, dp, fout);
+  bool useTwiddle = (argc == 2 && argv[1][0] == 't');
 
-  SteerCar(pid_steer, &twiddle);
+  if (useTwiddle)
+  {
+    std::cout << "Using twiddle." << std::endl;
+
+    std::vector<double> dp = { 0.5, 0.5, 1.0 };
+
+    std::ofstream fout("params.txt", std::ofstream::app);
+
+    fout << "c_topSpeed=[" << c_topSpeed << "] c_medSpeed=[" << c_medSpeed << "] c_carefulSpeed=[" << c_carefulSpeed << "]" << std::endl;
+
+    Twiddle twiddle(pid_steer, p, dp, fout);
+
+    SteerCar(pid_steer, &twiddle);
+  }
+  else
+  {
+    std::cout << "No twiddle." << std::endl;
+
+    SteerCar(pid_steer, nullptr);
+  }
 }
