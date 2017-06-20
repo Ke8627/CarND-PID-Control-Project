@@ -19,6 +19,8 @@ public:
 private:
   typedef std::chrono::time_point<std::chrono::system_clock> timestamp;
 
+  double SecondsSinceStart() const;
+
   timestamp m_start;
 
   bool m_started;

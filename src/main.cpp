@@ -251,7 +251,7 @@ int main()
   fout << "c_topSpeed=[" << c_topSpeed << "] c_medSpeed=[" << c_medSpeed << "] c_carefulSpeed=[" << c_carefulSpeed << "]" << std::endl;
 
   std::vector<double> dp = { 0.5, 0.5, 1.0 };
-  std::vector<double> p = { 0.5, 0.5, 1.0 };
+  std::vector<double> p = { 1.0, 0.0, 1.0 };
 
   PID pid_steer;
   pid_steer.Init(p[0], p[1], p[2]);
