@@ -3,6 +3,36 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 
+## Reflections
+
+### Describe the effect each of the P, I, D components had in your implementation.
+
+- The proportional component (P) steers the car towards the desired trajectory.
+- The integral component (I), theoretically, overcomes bias in the steering (e.g., wheels are not perfectly aligned with steering wheel).
+  - In my implementation, the car performed acceptably with small or even zero I coefficient.
+- The derivative component (D) avoids overshooting the desired trajectory and oscillating around it.
+
+### Describe how the final hyperparameters were chosen.
+
+My hyperparameters are:
+
+- PID coefficients for steering
+- PID coefficients for speed
+- target speeds
+
+This is how I chose the final hyperparameters:
+
+- I initially tuned the steering PID coefficients manually, but found it to be tedious, so I added a Twiddle class.
+- I defined error using this formula (`Twiddle::NextRun()` in `twiddle.cpp`):
+  - `err = TotalError / RunTime + 2000 / RunTime`
+  - The first term penalizes cross-track error (i.e., being far from the desired trajector)
+  - The second term penalizes short run time
+- My implementation declares steering to have failed when either of these criteria is met (`onMessage()` lambda in `main.cpp`):
+  - the cross-track error is too large (`SteeringErrorTooLarge()` in `main.cpp`) or
+  - the car has stalled after reaching a minimum speed (`CarStalled()` in `main.cpp`)
+- I tuned the speed PID coefficients and target speeds manually
+  - I tried higher target speeds like 60 mph, but my twiddle runs could not find parameters that would reliably complete the track
+
 ## Dependencies
 
 * cmake >= 3.5
