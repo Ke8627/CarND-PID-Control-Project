@@ -17,8 +17,16 @@ Self-Driving Car Engineer Nanodegree Program
 My hyperparameters are:
 
 - PID coefficients for steering
+  - (1.52047, 0.0, 1.0)
 - PID coefficients for speed
-- target speeds
+  - (0.03, 0.00001, 0.01)
+- Target speeds
+  - These are target speeds for the speed PID controller:
+    - c_topSpeed = 30
+    - c_medSpeed = 20
+    - c_carefulSpeed = 5
+  - When cross-track error is low, then the target speed is set higher
+  - See `GetIdealSpeed()` in `main.cpp`
 
 This is how I chose the final hyperparameters:
 
