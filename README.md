@@ -25,19 +25,30 @@ My hyperparameters are:
     - c_topSpeed = 30
     - c_medSpeed = 20
     - c_carefulSpeed = 5
-  - When cross-track error is low, then the target speed is set higher
+  - When cross-track error (CTE) is low, then the target speed is set higher
+  - When CTE is high, then the car should slow down to get back on track, so the target speed is lowered
   - See `GetIdealSpeed()` in `main.cpp`
 
 This is how I chose the final hyperparameters:
 
-- I initially tuned the steering PID coefficients manually, but found it to be tedious, so I added a Twiddle class.
+- I initially tuned the steering PID coefficients manually, but found it to be tedious, so I added the `Twiddle` class.
 - I defined error using this formula (`Twiddle::NextRun()` in `twiddle.cpp`):
   - `err = TotalError / RunTime + 2000 / RunTime`
-  - The first term penalizes cross-track error (i.e., being far from the desired trajector)
+  - The first term penalizes cross-track error (i.e., being far from the desired trajectory)
   - The second term penalizes short run time
-- My implementation declares steering to have failed when either of these criteria is met (`onMessage()` lambda in `main.cpp`):
-  - the cross-track error is too large (`SteeringErrorTooLarge()` in `main.cpp`) or
-  - the car has stalled after reaching a minimum speed (`CarStalled()` in `main.cpp`)
+- Run time is measured in seconds:
+  - Start: Run start
+  - End:
+    - Steering has failed (details below) or
+    - Car has run successfully for 250 seconds
+- Steering has failed when either of these criteria is met (`onMessage()` lambda in `main.cpp`):
+  - The cross-track error is too large
+    - `abs(steer_cte) > 2.2`
+    - See `SteeringErrorTooLarge()` in `main.cpp`
+  - The car has stalled after reaching a minimum speed
+    - Minimum speed: 10 mph
+    - Car stall threshold: < 2 mph
+    - See `CarStalled()` in `main.cpp`
 - I tuned the speed PID coefficients and target speeds manually
   - I tried higher target speeds like 60 mph, but my twiddle runs could not find parameters that would reliably complete the track
 
