@@ -11,6 +11,7 @@ Self-Driving Car Engineer Nanodegree Program
 - The integral component (I), theoretically, overcomes bias in the steering (e.g., wheels are not perfectly aligned with steering wheel).
   - In my implementation, the car performed acceptably with small or even zero I coefficient.
 - The derivative component (D) avoids overshooting the desired trajectory and oscillating around it.
+- `demo.m4v` is a video of the car in the simulator with my final hyperparameters described below
 
 ### Describe how the final hyperparameters were chosen.
 
