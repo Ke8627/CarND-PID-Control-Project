@@ -8,6 +8,8 @@ Twiddle::Twiddle(PID& pid, const std::vector<double>& p, const std::vector<doubl
     m_p(p),
     m_dp(dp),
     m_best_err(std::numeric_limits<double>::max()),
+    m_best_run(0),
+    m_run(0),
     m_iteration(0),
     m_p_index(0),
     m_tried_negative(false),
@@ -34,7 +36,16 @@ void Twiddle::AdvanceParameter()
 
 void Twiddle::PrintStatus(std::ostream& os, double err, double seconds)
 {
-    os << "err=[" << err << "] seconds=[" << seconds << "] kP=[" << m_p[0] << "] kI=[" << m_p[1] << "] kD=[" << m_p[2] << "] iteration=[" << m_iteration << "]" << std::endl;
+    os << "run=[" << m_run
+        << "] err=[" << err
+        << "] seconds=[" << seconds
+        << "] kP=[" << m_p[0]
+        << "] kI=[" << m_p[1]
+        << "] kD=[" << m_p[2]
+        << "] iteration=[" << m_iteration
+        << "] best_run=[" << m_best_run
+        << "] best_err=[" << m_best_err
+        << "]" << std::endl;
 }
 
 void Twiddle::NextRun()
@@ -54,6 +65,7 @@ void Twiddle::NextRun()
   if (err < m_best_err)
   {
     m_best_err = err;
+    m_best_run = m_run;
     m_dp[m_p_index] *= 1.1;
 
     AdvanceParameter();
@@ -75,4 +87,6 @@ void Twiddle::NextRun()
       m_pid.Init(m_p[0], m_p[1], m_p[2]);
     }
   }
+
+  m_run++;
 }

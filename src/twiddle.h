@@ -22,7 +22,9 @@ private:
   std::vector<double> m_p;
   std::vector<double> m_dp;
   double m_best_err;
+  int m_best_run;
 
+  int m_run;
   int m_iteration;
   int m_p_index;
   bool m_tried_negative;
