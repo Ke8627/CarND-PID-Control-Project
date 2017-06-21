@@ -33,6 +33,7 @@ My hyperparameters are:
 This is how I chose the final hyperparameters:
 
 - I initially tuned the steering PID coefficients manually, but found it to be tedious, so I added the `Twiddle` class.
+  - `report/params.txt` contains the output from my twiddle experiments
 - I defined error using this formula (`Twiddle::NextRun()` in `twiddle.cpp`):
   - `err = TotalError / RunTime + 2000 / RunTime`
   - The first term penalizes cross-track error (i.e., being far from the desired trajectory)
